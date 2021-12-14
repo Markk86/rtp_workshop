@@ -1,20 +1,19 @@
 #!/usr/bin/env nextflow
 
-params.foo = "String"
-params.bar = 5
+Channel.fromFilePairs("test-datasets/fastq/*_{1,2}.fastq.gz", checkIfExists: true)
+       .set{ ch_reads }
 
-println params.foo.size()
-
-process TEST{
-
-    echo true
+process FASTQC{
+    publishDir "./fastqc", mode: 'copy'
 
     input:
-    val(foo) from params.foo
-    val(bar) from params.bar
+    tuple val(base), file(reads) from ch_reads
+
+    output:
+    tuple val(base), file("*.{html,zip}") into ch_multiqc
 
     script:
     """
-    echo "Script body printing foo: $foo, bar: $bar"
+    fastqc -q $reads
     """
 }
